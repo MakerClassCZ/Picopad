@@ -76,11 +76,21 @@ def teletext(page):
             page = 899
             
         with requests.get("http://teletext.lynt.cz/?page=%s" % (page)) as response:
+            try:
+                prev = int(response.headers['prev'])
+            except:
+                prev = page
+            try:
+                next = int(response.headers['next'])
+            except:
+                next = page
+
             with open("/sd/picture.bmp", "wb") as f:
                 for chunk in response.iter_content(chunk_size=512):
                     f.write(chunk)       
         
         display_page()
+        return (prev, next)
         
 # Display teletext page from SD card image
 def display_page():
@@ -100,7 +110,7 @@ requests = adafruit_requests.Session(pool, ssl.create_default_context())
 group = displayio.Group()
 
 # Download and display first page
-teletext(page)
+prev, next = teletext(page)
 
 # Call garbage collector to free memory
 gc.collect()
@@ -117,13 +127,11 @@ while True:
 
     # Change teletext page
     if (btn_right.value == False):
-        page += 1
-        teletext(page)
+        prev, next = teletext(next)
         gc.collect()
     
     if (btn_left.value == False):
-        page -= 1
-        teletext(page)
+        prev, next = teletext(prev)
         gc.collect()
 
     if (btn_y.value == False):
