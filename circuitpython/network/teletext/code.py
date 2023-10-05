@@ -55,100 +55,112 @@ wifi.radio.connect(os.getenv('CIRCUITPY_WIFI_SSID'), os.getenv('CIRCUITPY_WIFI_P
 
 pool = socketpool.SocketPool(wifi.radio)
 requests = adafruit_requests.Session(pool)
+
 display = board.DISPLAY
 display.auto_refresh = False
 group = displayio.Group()
 group.append(displayio.Group())
 display.show(group)
+
 bitmap = None
+palette = None
 
 def teletext(page):
+
+    # We use global palette and bitmap. 
+    # It is slower, but prevents memory fragmentation - they have same size for all pages
+    global bitmap
+    global palette
+
+    with requests.get(f"http://teletext.lynt.cz/?page={page}", stream=True) as resp:
+        # Get headers with previous and next page number
+        try:
+            prev = int(resp.headers['prev'])
+        except:
+            prev = page
+        try:
+            next = int(resp.headers['next'])
+        except:
+            next = page    
+
+        # Read BMP header and first 4 bytes from DIB header - they contains size of DIB header (14 + 4 bytes)
+        chunk_size = 18
+        data = b''
+        # We use while loop to read the whole chunk, becouse resp.iter_content() can return less bytes than requested
+        while len(data) < chunk_size:
+            data += resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
+
+        # Read the rest of DIB header (usually 40 bytes - 4 already read)
+        # data[14:18] from previous chunk contains size of DIB header
+        chunk_size = int.from_bytes(data[14:18], "little") - 4            
+        data = b''
+        while len(data) < chunk_size:
+            data += resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
+
+        # Extract image size and bit depth from DIB header
+        width = int.from_bytes(data[0:4], "little")
+        height = int.from_bytes(data[4:8], "little")
+        bit_depth = int.from_bytes(data[10:12], "little")
+        color_count = 2**bit_depth
         
-        global bitmap
-        with requests.get("http://teletext.lynt.cz/?page=%s" % (page), stream=True) as resp:
-            try:
-                prev = int(resp.headers['prev'])
-            except:
-                prev = page
-            try:
-                next = int(resp.headers['next'])
-            except:
-                next = page    
+        # BMP row size in bytes must be multiple of 4, so we need to pad it
+        line_width_pad = ((width + width % 4) // 8 * bit_depth)
 
-            # Read BMP and DIB headers (54 bytes)
-            chunk_size = 18
-            data = resp.iter_content(chunk_size=chunk_size).__next__()
-
-            while len(data) < chunk_size:
-                add = resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
-                data += add
-
-            chunk_size = int.from_bytes(data[14:18], "little") - 4            
-            data = resp.iter_content(chunk_size=chunk_size).__next__()
-
+        # Read and process the color palette (64 bytes for 16 colors, 4BPP)
+        chunk_size = color_count * bit_depth
+        data = b''
+        while len(data) < chunk_size:
+            data += resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
             
-            while len(data) < chunk_size:
-                add = resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
-                data += add
-            
+        #print(width, height, bit_depth, color_count)
 
-            width = int.from_bytes(data[0:4], "little")
-            height = int.from_bytes(data[4:8], "little")
-            bit_depth = int.from_bytes(data[10:12], "little")
-            color_count = 2**bit_depth
-            
-            line_width_pad = ((width + width % 4) // 8 * bit_depth)
-
-            # Read and process the color palette (64 bytes)
-            chunk_size = color_count * bit_depth
-            data = resp.iter_content(chunk_size=chunk_size).__next__()
-
-            while len(data) < chunk_size:
-                add = resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
-                data += add
-
-            print(width, height, bit_depth, color_count)
-
+        if palette is None:
             palette = displayio.Palette(color_count)
-            for i in range(0, len(data), 4):
-                blue, green, red, _ = data[i:i+4]
-                palette[i//4] = (red << 16) + (green << 8) + blue
 
-            # Process BMP data
-            if bitmap is None:
-                bitmap = displayio.Bitmap(width, height, color_count)
+        # Extract colors from the palette and convert them from BGR to RGB
+        for i in range(0, len(data), 4):
+            blue, green, red, _ = data[i:i+4]
+            palette[i//4] = (red << 16) + (green << 8) + blue
 
-            row = 1
-            chunk_size = line_width_pad
+        if bitmap is None:
+            bitmap = displayio.Bitmap(width, height, color_count)
 
-            for data in resp.iter_content(chunk_size=chunk_size):
-                index = 0
+        # Process the image data row by row from bottom to top
 
-                #print(row)
-                while len(data) < chunk_size:
-                    
-                    add = resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
-                    data += add
+        # Row counter
+        row = 1
+        # We try to load whole row + padding at once
+        chunk_size = line_width_pad
 
-                row_offset = (height - row) * width
+        for data in resp.iter_content(chunk_size=chunk_size):
+            # pixel position in the row
+            index = 0
 
-                for byte in data:
-                    pixel1 = byte >> 4
-                    pixel2 = byte & 0x0F
-                    
-                    bitmap[row_offset + index] = pixel1
-                    index += 1
+            while len(data) < chunk_size:
+                data += resp.iter_content(chunk_size=chunk_size-len(data)).__next__()
 
-                    bitmap[row_offset + index] = pixel2
-                    index += 1
+            # Calculate the current row from bottom
+            row_offset = (height - row) * width
 
-                row += 1
+            # Process every byte returned
+            for byte in data:
+                # BMP is 4BPP, so every byte contains 2 pixels - we extract them
+                pixel1 = byte >> 4
+                pixel2 = byte & 0x0F
+                
+                # Set the pixels in the bitmap
+                bitmap[row_offset + index] = pixel1
+                index += 1
 
+                bitmap[row_offset + index] = pixel2
+                index += 1
 
-        return palette, prev, next
+            row += 1
+
+    return prev, next
 
 # Download and display first page
-palette, prev, next = teletext(page)
+prev, next = teletext(page)
 group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
 display.refresh()
 gc.collect()
@@ -167,14 +179,14 @@ while True:
 
     # Change teletext page
     if (btn_right.value == False):
-        palette, prev, next = teletext(next)
-        group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
+        prev, next = teletext(next)
+        #group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
         display.refresh()
         gc.collect()
     
     if (btn_left.value == False):
-        palette, prev, next = teletext(prev)
-        group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
+        prev, next = teletext(prev)
+        #group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
         display.refresh()
         gc.collect()
 
@@ -183,28 +195,28 @@ while True:
         # this is nice alternative to math.ceil()
         # it rounds page to next 10 (eg. from 113 to 120)
         page = int((page + 10)/10)*10
-        palette, prev, next = teletext(page)
-        group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
+        prev, next = teletext(page)
+
         display.refresh()
         gc.collect()
 
     if (btn_x.value == False):
         page = int((page)/10)*10
-        palette, prev, next = teletext(page)
-        group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
+        prev, next = teletext(page)
+
         display.refresh()
         gc.collect()
 
     if (btn_b.value == False):
         page = int((page + 100)/100)*100
-        palette, prev, next = teletext(page)
-        group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
+        prev, next = teletext(page)
+
         display.refresh()
         gc.collect()
 
     if (btn_a.value == False):
         page = int((page)/100)*100
-        palette, prev, next = teletext(page)
-        group[0] = displayio.TileGrid(bitmap, pixel_shader=palette)
+        prev, next = teletext(page)
+
         gc.collect()
 
