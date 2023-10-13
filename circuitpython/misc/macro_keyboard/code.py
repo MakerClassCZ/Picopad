@@ -4,8 +4,9 @@ import keypad
 import usb_hid
 from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
+# default US keyboard layout
 # from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS as KeyboardLayout
-# you can get your keyboard layout here: https://github.com/Neradoc/Circuitpython_Keyboard_Layouts/tree/main/libraries/layouts
+# you can get your keyboard layouts here: https://github.com/Neradoc/Circuitpython_Keyboard_Layouts
 from keyboard_layout_win_cz import KeyboardLayout
 
 # keyboard and layout setup
