@@ -178,7 +178,7 @@ async def move():
             await asyncio.sleep(snake.speed)
 
         # Show game over message
-        game.text.text = 'Game\nOver\n= %s'%(snake.length)  
+        game.text.text = f"Game\nOver\n= {snake.length}"  
         game.refresh()
         await asyncio.sleep(5)
         

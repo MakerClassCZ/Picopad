@@ -132,7 +132,7 @@ async def send_to_tmep():
             query_string = "?"
             for measurement in measurements:
                 query_string += measurement.tag + "=" + str(measurement.value) + "&"
-            url = "http://%s/%s" % (os.getenv('TMEP_DOMAIN'), query_string)
+            url = f"http://{os.getenv('TMEP_DOMAIN')}/{query_string}"
             # print(url)
             
             requests.get(url)
@@ -155,7 +155,7 @@ async def save_to_sdcard():
                 dt = rtc.RTC().datetime
                 date = "%04d-%02d-%02d %02d:%02d:%02d" %(dt.tm_year, dt.tm_mon, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec)
 
-                f.write("%s;%s;%s;%s\n" % (date, temp.value, humi.value, co2.value))
+                f.write(f"{date};{temp.value};{humi.value};{co2.value}\n")
 
             print("Data saved to SD card")
 
@@ -171,7 +171,7 @@ async def measure_and_display(sensor, text_areas, display):
 
         # update the display
         for measurement in measurements:
-            text_areas[measurement.tag].text = "%.1f %s" %(measurement.value, measurement.unit)
+            text_areas[measurement.tag].text = f"{measurement.value:.1f} {measurement.unit}"
         display.refresh()
 
         await asyncio.sleep(5)  # Sleep for 5 seconds

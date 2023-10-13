@@ -75,7 +75,7 @@ def teletext(page):
         if page > 899:
             page = 899
             
-        with requests.get("http://teletext.lynt.cz/?page=%s" % (page)) as response:
+        with requests.get(f"http://teletext.lynt.cz/?page={page}") as response:
             try:
                 prev = int(response.headers['prev'])
             except:

@@ -19,7 +19,7 @@ print("Connecting to WiFi")
 # connect to your SSID
 wifi.radio.connect(os.getenv('CIRCUITPY_WIFI_SSID'), os.getenv('CIRCUITPY_WIFI_PASSWORD'))
 
-print("Connected to WiFi %s" % (os.getenv('CIRCUITPY_WIFI_SSID')))
+print(f"Connected to WiFi {os.getenv('CIRCUITPY_WIFI_SSID')}")
 
 pool = socketpool.SocketPool(wifi.radio)
 
@@ -35,5 +35,5 @@ google_ipv4 = ipaddress.ip_address("8.8.4.4")
 # ping Google every 15 seconds
 while True:
     
-    print("Ping google.com: %.1f ms" % (wifi.radio.ping(google_ipv4)*1000))
+    print(f"Ping google.com: {wifi.radio.ping(google_ipv4)*1000:.1f} ms")
     time.sleep(15)
