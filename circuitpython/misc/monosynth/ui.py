@@ -8,6 +8,13 @@ from adafruit_display_text import label
 import adafruit_imageload
 import board
 
+
+def increase(start, step):
+    num = start
+    while True:
+        num += step
+        yield num
+
 def get_display():
     
     display = board.DISPLAY
@@ -23,41 +30,56 @@ def get_display():
         yellow = 0xFFFF00
         
 
-
+    x = 270
+    inc = increase(250, -60)
+    w = 40
+    h = 40
     keys = [
-        Rect(10, 10, 40, 40, fill=colors.grey),
-        Rect(10, 70, 40, 40, fill=colors.grey),
-        Rect(10, 130, 40, 40, fill=colors.grey),
-        Rect(10, 190, 40, 40, fill=colors.grey),
+        Rect(x, next(inc), w, h, fill=colors.grey),
+        Rect(x, next(inc), w, h, fill=colors.grey),
+        Rect(x, next(inc), w, h, fill=colors.grey),
+        Rect(x, next(inc), w, h, fill=colors.grey),
     ]
 
+
+    x = 10
+    inc = increase(0, 30)
     labels = [
-        label.Label(terminalio.FONT, text="shape", color=colors.red, x=80, y=30),
-        label.Label(terminalio.FONT, text="octave", color=colors.white, x=80, y=60),
-        label.Label(terminalio.FONT, text="lfo", color=colors.white, x=80, y=90),
-        label.Label(terminalio.FONT, text="freqency", color=colors.white, x=80, y=120),
-        label.Label(terminalio.FONT, text="q-factor", color=colors.white, x=80, y=150),
-        label.Label(terminalio.FONT, text="release", color=colors.white, x=80, y=180),
-        label.Label(terminalio.FONT, text="detune", color=colors.white, x=80, y=210),
-        label.Label(terminalio.FONT, text="C", color=colors.black, x=24, y=30, scale=2),
-        label.Label(terminalio.FONT, text="D", color=colors.black, x=24, y=90, scale=2),
-        label.Label(terminalio.FONT, text="E", color=colors.black, x=24, y=150, scale=2),
-        label.Label(terminalio.FONT, text="G", color=colors.black, x=24, y=210, scale=2),
+        label.Label(terminalio.FONT, text="shape", color=colors.red, x=x, y=next(inc)),
+        label.Label(terminalio.FONT, text="octave", color=colors.white, x=x, y=next(inc)),
+        label.Label(terminalio.FONT, text="lfo", color=colors.white, x=x, y=next(inc)),
+        label.Label(terminalio.FONT, text="freqency", color=colors.white, x=x, y=next(inc)),
+        label.Label(terminalio.FONT, text="q-factor", color=colors.white, x=x, y=next(inc)),
+        label.Label(terminalio.FONT, text="release", color=colors.white, x=x, y=next(inc)),
+        label.Label(terminalio.FONT, text="detune", color=colors.white, x=x, y=next(inc)),
     ]
 
+    x = 284
+    inc = increase(-30, 60)
+    labels_keys = [    
+        label.Label(terminalio.FONT, text="G", color=colors.black, x=x, y=next(inc), scale=2),
+        label.Label(terminalio.FONT, text="E", color=colors.black, x=x, y=next(inc), scale=2),
+        label.Label(terminalio.FONT, text="D", color=colors.black, x=x, y=next(inc), scale=2),
+        label.Label(terminalio.FONT, text="C", color=colors.black, x=x, y=next(inc), scale=2),
+    ]
+
+    labels = labels + labels_keys
+
+    x = 80
+    inc = increase(60, 30)
+    w = 150
+    h = 8
     bars = [
-
-        HorizontalProgressBar((160, 90), (150, 8), bar_color=colors.white,
+        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
                             outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((160, 120), (150, 8), bar_color=colors.white,
+        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
                             outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((160, 150), (150, 8), bar_color=colors.white,
+        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
                             outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((160, 180), (150, 8), bar_color=colors.white,
+        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
                             outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((160, 210), (150, 8), bar_color=colors.white,
+        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
                             outline_color=colors.light_grey, fill_color=colors.grey,),
-
     ]
 
 
@@ -76,32 +98,33 @@ def get_display():
 
     sprites = []
 
-    pos = 160
+    x = 80
+    w = 15
+    h = 13
     for item in range(6):
         sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette,
                                     width=1,
                                     height=1,
-                                    tile_width=15,
-                                    tile_height=13)
-
-        sprite.x = pos
+                                    tile_width=w,
+                                    tile_height=h)
+        sprite.x = x
         sprite.y = 24
         sprite[0] = item
-        pos += 25
+        x += w+10
         sprites.append(sprite)
 
-    pos = 160
+    x = 80
     for item in range(5):
         sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette,
                                     width=1,
                                     height=1,
-                                    tile_width=15,
-                                    tile_height=13)
+                                    tile_width=w,
+                                    tile_height=h)
 
-        sprite.x = pos
+        sprite.x = x
         sprite.y = 54
         sprite[0] = item + 6
-        pos += 25
+        x += w+10
         sprites.append(sprite)
 
     sprites[0].pixel_shader = active_palette
