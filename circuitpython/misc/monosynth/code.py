@@ -194,7 +194,9 @@ notes = [
 ]
 
 # set up the audio system, mixer, and synth
-audio = audiopwmio.PWMAudioOut(board.D0)  # SCK pin on QTPY RP2040
+audio = audiopwmio.PWMAudioOut(board.AUDIO)
+#audio = audiopwmio.PWMAudioOut(board.D0) # for PWM output through RC filter
+
 mixer = audiomixer.Mixer(channel_count=1, sample_rate=28000, buffer_size=2048)
 synth = synthio.Synthesizer(channel_count=1, sample_rate=28000)
 audio.play(mixer)
