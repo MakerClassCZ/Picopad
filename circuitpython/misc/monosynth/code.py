@@ -4,126 +4,55 @@
 # 22 Jun 2023 - @todbot / Tod Kurt
 # part of https://github.com/todbot/circuitpython-synthio-tricks
 
-import random
-import displayio
-import terminalio
+
 import board
 import audiomixer
 import audiopwmio
 import synthio
-import ulab.numpy as np
-from digitalio import DigitalInOut, Pull
-from adafruit_debouncer import Debouncer
-from adafruit_display_shapes.rect import Rect
-from adafruit_progressbar.progressbar import HorizontalProgressBar
-from adafruit_display_text import label
-import adafruit_wave
-import adafruit_imageload
+from waves import Wavetable, wave_squ, wave_sin, wave_tri, wave_saw, wave_noise
+from ui import get_display
 
-white = 0xFFFFFF
-red = 0xFF0000
-blue = 0x0000FF
-grey = 0x777777
-light_grey = 0xAAAAAA
-black = 0x000000
-yellow = 0xFFFF00
 
-display = board.DISPLAY
-display.auto_refresh = False
+# basic synth settings
+oscs_per_note = 3      # how many oscillators for each note
+osc_detune = 0.001     # how much to detune oscillators for phatness
+filter_freq_lo = 100   # filter lowest freq
+filter_freq_hi = 10000  # filter highest freq
+filter_res_lo = 0.5    # filter q lowest value
+filter_res_hi = 2.0    # filter q highest value
+vibrato_lfo_hi = 0.3   # vibrato amount when modwheel is maxxed out
+vibrato_rate = 5       # vibrato frequency
 
-group = displayio.Group()
+# scale set with modwheel
+lfo_vibrato = synthio.LFO(rate=vibrato_rate, scale=0.01)
 
-keys = [
-    Rect(10, 10, 40, 40, fill=grey),
-    Rect(10, 70, 40, 40, fill=grey),
-    Rect(10, 130, 40, 40, fill=grey),
-    Rect(10, 190, 40, 40, fill=grey),
+# set up the audio system, mixer, and synth
+audio = audiopwmio.PWMAudioOut(board.AUDIO) # for small internal speaker
+#audio = audiopwmio.PWMAudioOut(board.D0) # for PWM output through RC filter
+
+mixer = audiomixer.Mixer(channel_count=1, sample_rate=28000, buffer_size=2048)
+synth = synthio.Synthesizer(channel_count=1, sample_rate=28000)
+audio.play(mixer)
+mixer.voice[0].play(synth)
+mixer.voice[0].level = 0.75  # cut the volume a bit so doesn't distort
+
+wavetable = Wavetable("PLAITS02.WAV")
+
+# https://studiocode.dev/resources/midi-middle-c/
+notes = [
+    60,  # C4
+    62,  # D4
+    64,  # E4
+    67,  # G4
 ]
 
-labels = [
-    label.Label(terminalio.FONT, text="shape", color=red, x=80, y=30),
-    label.Label(terminalio.FONT, text="octave", color=white, x=80, y=60),
-    label.Label(terminalio.FONT, text="lfo", color=white, x=80, y=90),
-    label.Label(terminalio.FONT, text="freqency", color=white, x=80, y=120),
-    label.Label(terminalio.FONT, text="q-factor", color=white, x=80, y=150),
-    label.Label(terminalio.FONT, text="release", color=white, x=80, y=180),
-    label.Label(terminalio.FONT, text="detune", color=white, x=80, y=210),
-    label.Label(terminalio.FONT, text="C", color=black, x=24, y=30, scale=2),
-    label.Label(terminalio.FONT, text="D", color=black, x=24, y=90, scale=2),
-    label.Label(terminalio.FONT, text="E", color=black, x=24, y=150, scale=2),
-    label.Label(terminalio.FONT, text="G", color=black, x=24, y=210, scale=2),
-]
-
-bars = [
-
-    HorizontalProgressBar((160, 90), (150, 8), bar_color=white,
-                          outline_color=light_grey, fill_color=grey,),
-    HorizontalProgressBar((160, 120), (150, 8), bar_color=white,
-                          outline_color=light_grey, fill_color=grey,),
-    HorizontalProgressBar((160, 150), (150, 8), bar_color=white,
-                          outline_color=light_grey, fill_color=grey,),
-    HorizontalProgressBar((160, 180), (150, 8), bar_color=white,
-                          outline_color=light_grey, fill_color=grey,),
-    HorizontalProgressBar((160, 210), (150, 8), bar_color=white,
-                          outline_color=light_grey, fill_color=grey,),
-
-]
-
-
-sprite_sheet, palette = adafruit_imageload.load("/synth.bmp",
-                                                bitmap=displayio.Bitmap,
-                                                palette=displayio.Palette)
-
-active_palette = displayio.Palette(2)
-active_palette[0] = yellow
-active_palette[1] = black
-
-
-sprites = []
-
-pos = 160
-for item in range(6):
-    sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette,
-                                width=1,
-                                height=1,
-                                tile_width=15,
-                                tile_height=13)
-
-    sprite.x = pos
-    sprite.y = 24
-    sprite[0] = item
-    pos += 25
-    sprites.append(sprite)
-
-pos = 160
-for item in range(5):
-    sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette,
-                                width=1,
-                                height=1,
-                                tile_width=15,
-                                tile_height=13)
-
-    sprite.x = pos
-    sprite.y = 54
-    sprite[0] = item + 6
-    pos += 25
-    sprites.append(sprite)
-
-sprites[0].pixel_shader = active_palette
-sprites[8].pixel_shader = active_palette
-
-for item in keys + labels + bars + sprites:
-    group.append(item)
-
-display.show(group)
-
+# setup UI
+display, keys, labels, bars, sprites, buttons, colors, palettes = get_display()
 
 # simple range mapper, like Arduino map()
 def map_range(s, a1, a2, b1, b2): return b1 + \
     ((s - a1) * (b2 - b1) / (a2 - a1))
 
-
-def lerp(a, b, t): return (1-t)*a + t*b
 
 def limits(value, plus, lo, hi, loop=False):
     value += plus
@@ -137,95 +66,10 @@ def limits(value, plus, lo, hi, loop=False):
             return lo
         else:
             return hi
-
     return value
 
-
-class Wavetable:
-    """ A 'waveform' for synthio.Note that uses a wavetable w/ a scannable wave position."""
-
-    def __init__(self, filepath, wave_len=256):
-        self.w = adafruit_wave.open(filepath)
-        self.wave_len = wave_len  # how many samples in each wave
-        if self.w.getsampwidth() != 2 or self.w.getnchannels() != 1:
-            raise ValueError("unsupported WAV format")
-        # empty buffer we'll copy into
-        self.waveform = np.zeros(wave_len, dtype=np.int16)
-        self.num_waves = self.w.getnframes() // self.wave_len
-        self.set_wave_pos(0)
-
-    def set_wave_pos(self, pos):
-        """Pick where in wavetable to be, morphing between waves"""
-        pos = min(max(pos, 0), self.num_waves-1)  # constrain
-        samp_pos = int(pos) * self.wave_len  # get sample position
-        self.w.setpos(samp_pos)
-        waveA = np.frombuffer(self.w.readframes(self.wave_len), dtype=np.int16)
-        self.w.setpos(samp_pos + self.wave_len)  # one wave up
-        waveB = np.frombuffer(self.w.readframes(self.wave_len), dtype=np.int16)
-        pos_frac = pos - int(pos)  # fractional position between wave A & B
-        self.waveform[:] = lerp(waveA, waveB, pos_frac)  # mix waveforms A & B
-
-
-midi_channel = 1         # which midi channel to receive on
-oscs_per_note = 3      # how many oscillators for each note
-osc_detune = 0.001     # how much to detune oscillators for phatness
-filter_freq_lo = 100   # filter lowest freq
-filter_freq_hi = 10000  # filter highest freq
-filter_res_lo = 0.5    # filter q lowest value
-filter_res_hi = 2.0    # filter q highest value
-vibrato_lfo_hi = 0.3   # vibrato amount when modwheel is maxxed out
-vibrato_rate = 5       # vibrato frequency
-
-
-# Setup buttons
-buttons = []
-
-for item in [board.SW_LEFT, board.SW_UP, board.SW_DOWN, board.SW_RIGHT, board.SW_A, board.SW_B, board.SW_X, board.SW_Y]:
-    pin = DigitalInOut(item)
-    pin.pull = Pull.UP
-    buttons.append(Debouncer(pin))
-
-
-notes = [
-    60,  # C
-    62,  # D
-    64,  # E
-    67,  # G
-]
-
-# set up the audio system, mixer, and synth
-audio = audiopwmio.PWMAudioOut(board.AUDIO)
-#audio = audiopwmio.PWMAudioOut(board.D0) # for PWM output through RC filter
-
-mixer = audiomixer.Mixer(channel_count=1, sample_rate=28000, buffer_size=2048)
-synth = synthio.Synthesizer(channel_count=1, sample_rate=28000)
-audio.play(mixer)
-mixer.voice[0].play(synth)
-mixer.voice[0].level = 0.75  # cut the volume a bit so doesn't distort
-
-
-VOLUME = 28000
-SAMPLE_SIZE = 512
-# our oscillator waveform, a 512 sample downward saw wave going from +/-28k
-wave_tri = np.concatenate((np.linspace(-VOLUME, VOLUME, num=SAMPLE_SIZE//2, dtype=np.int16),
-                          np.linspace(VOLUME, -VOLUME, num=SAMPLE_SIZE//2, dtype=np.int16)))
-wave_saw = np.linspace(VOLUME, -VOLUME, num=SAMPLE_SIZE, dtype=np.int16)
-wave_squ = np.concatenate((np.ones(SAMPLE_SIZE//2, dtype=np.int16)
-                          * VOLUME, np.ones(SAMPLE_SIZE//2, dtype=np.int16)*-VOLUME))
-wave_sin = np.array(np.sin(np.linspace(
-    0, 4*np.pi, SAMPLE_SIZE, endpoint=False)) * VOLUME, dtype=np.int16)
-wave_noise = np.array([random.randint(-VOLUME, VOLUME)
-                      for i in range(SAMPLE_SIZE)], dtype=np.int16)
-wave_sin_dirty = np.array(wave_sin + (wave_noise/4), dtype=np.int16)
-
-wavetable = Wavetable("PLAITS02.WAV")
-
-# scale set with modwheel
-lfo_vibrato = synthio.LFO(rate=vibrato_rate, scale=0.01)
-
-
 # midi note on
-def note_on(notenum, vel):
+def note_on(notenum, vel=100):
     amp_level = map_range(vel, 0, 100, 0, 1)
     amp_env = synthio.Envelope(attack_time=0.1, decay_time=0.05,
                                release_time=amp_env_release_time,
@@ -242,9 +86,7 @@ def note_on(notenum, vel):
     synth.press(oscs)
 
 # midi note off
-
-
-def note_off(notenum, vel):
+def note_off():
     synth.release(oscs)
     oscs.clear()
 
@@ -264,22 +106,22 @@ class synh_settings():
         self.current = 0
 
     def move(self, ch):
-        labels[self.current].color = white
+        labels[self.current].color = colors.white
         self.current = limits(self.current, 1*ch, 0, 6, True)
-        labels[self.current].color = red
+        labels[self.current].color = colors.red
         display.refresh()
 
     def change(self, ch):
         if self.current == 0:
-            sprites[self.shape].pixel_shader = palette
+            sprites[self.shape].pixel_shader = palettes.normal
             self.shape = limits(self.shape, 1*ch, 0, 5, True)
-            sprites[self.shape].pixel_shader = active_palette
+            sprites[self.shape].pixel_shader = palettes.active
 
         elif self.current == 1:
-            sprites[8+self.octave//12].pixel_shader = palette
+            sprites[8+self.octave//12].pixel_shader = palettes.normal
             self.octave = limits(self.octave, 12*ch, -24, 24)
             sprites[8+self.octave//12
-                    ].pixel_shader = active_palette
+                    ].pixel_shader = palettes.active
 
         elif self.current == 2:
             self.lfo = limits(self.lfo, 10*ch, 0, 100)
@@ -335,17 +177,17 @@ while True:
     for item in range(4):
 
         if (buttons[item].fell):
-            note = notes[item]+s.octave
-            note_off(note_played, 0)
-            note_on(note, velocity)
+            note = notes[item] + s.octave
+            note_off()
+            note_on(note)
             note_played = note
-            keys[item].fill = white
+            keys[item].fill = colors.white
             display.refresh()
 
         if (buttons[item].rose):
-            note = notes[item]+s.octave
-            note_off(note, 0)
-            keys[item].fill = grey
+            note = notes[item] + s.octave
+            note_off()
+            keys[item].fill = colors.grey
             display.refresh()
 
     if (buttons[4].fell):
