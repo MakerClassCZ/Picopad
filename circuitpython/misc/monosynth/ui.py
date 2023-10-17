@@ -30,58 +30,49 @@ def get_display():
         yellow = 0xFFFF00
         
 
+    # Keypad buttons
+    keys = []
     x = 270
     inc = increase(250, -60)
     w = 40
     h = 40
-    keys = [
-        Rect(x, next(inc), w, h, fill=colors.grey),
-        Rect(x, next(inc), w, h, fill=colors.grey),
-        Rect(x, next(inc), w, h, fill=colors.grey),
-        Rect(x, next(inc), w, h, fill=colors.grey),
-    ]
 
-
-    x = 10
-    inc = increase(0, 30)
-    labels = [
-        label.Label(terminalio.FONT, text="shape", color=colors.red, x=x, y=next(inc)),
-        label.Label(terminalio.FONT, text="octave", color=colors.white, x=x, y=next(inc)),
-        label.Label(terminalio.FONT, text="lfo", color=colors.white, x=x, y=next(inc)),
-        label.Label(terminalio.FONT, text="freqency", color=colors.white, x=x, y=next(inc)),
-        label.Label(terminalio.FONT, text="q-factor", color=colors.white, x=x, y=next(inc)),
-        label.Label(terminalio.FONT, text="release", color=colors.white, x=x, y=next(inc)),
-        label.Label(terminalio.FONT, text="detune", color=colors.white, x=x, y=next(inc)),
-    ]
-
+    for item in range(4):
+        keys.append(Rect(x, next(inc), w, h, fill=colors.grey))
+    
+    # Keypad labels
+    labels_keys = []
     x = 284
     inc = increase(-30, 60)
-    labels_keys = [    
-        label.Label(terminalio.FONT, text="G", color=colors.black, x=x, y=next(inc), scale=2),
-        label.Label(terminalio.FONT, text="E", color=colors.black, x=x, y=next(inc), scale=2),
-        label.Label(terminalio.FONT, text="D", color=colors.black, x=x, y=next(inc), scale=2),
-        label.Label(terminalio.FONT, text="C", color=colors.black, x=x, y=next(inc), scale=2),
-    ]
 
-    labels = labels + labels_keys
+    for item in ["G", "E", "D", "C"]:
+        labels_keys.append(label.Label(terminalio.FONT, text=item, color=colors.black, x=x, y=next(inc), scale=2))
 
+    # Settings labels
+    labels = []
+    x = 10
+    inc = increase(0, 30)
+
+    for item in ["shape", "octave", "lfo", "freqency", "q-factor", "release", "detune"]:
+        labels.append(label.Label(terminalio.FONT, text=item, color=colors.white, x=x, y=next(inc)))
+
+    # make first label active (red)
+    labels[0].color = colors.red
+    
+    # Settings bars
+    bars = []
     x = 80
     inc = increase(60, 30)
     w = 150
     h = 8
-    bars = [
-        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
-                            outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
-                            outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
-                            outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
-                            outline_color=colors.light_grey, fill_color=colors.grey,),
-        HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
-                            outline_color=colors.light_grey, fill_color=colors.grey,),
-    ]
 
+    for item in range(5):
+        bars.append(HorizontalProgressBar((x, next(inc)), (w, h), bar_color=colors.white,
+                            outline_color=colors.light_grey, fill_color=colors.grey,))
+    
+
+    # UI icons
+    sprites = []
 
     sprite_sheet, palette = adafruit_imageload.load("/synth.bmp",
                                                     bitmap=displayio.Bitmap,
@@ -91,46 +82,41 @@ def get_display():
     active_palette[0] = colors.yellow
     active_palette[1] = colors.black
 
+    # normal palette is defaul black & white
+    # active palette is yellow & black - for selected icon
     class palettes:
         normal = palette
         active = active_palette
 
-
-    sprites = []
-
-    x = 80
+    # every icon is 15x13
     w = 15
     h = 13
+
+    # shape selection line
+    x = 80
     for item in range(6):
-        sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette,
-                                    width=1,
-                                    height=1,
-                                    tile_width=w,
-                                    tile_height=h)
+        sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette, tile_width=w, tile_height=h)
         sprite.x = x
         sprite.y = 24
         sprite[0] = item
         x += w+10
         sprites.append(sprite)
-
+    
+    # octave selection line
     x = 80
     for item in range(5):
-        sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette,
-                                    width=1,
-                                    height=1,
-                                    tile_width=w,
-                                    tile_height=h)
-
+        sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette, tile_width=w, tile_height=h)
         sprite.x = x
         sprite.y = 54
         sprite[0] = item + 6
         x += w+10
         sprites.append(sprite)
 
+    # make first icon on each line active
     sprites[0].pixel_shader = active_palette
     sprites[8].pixel_shader = active_palette
 
-    for item in keys + labels + bars + sprites:
+    for item in keys + labels_keys + labels + bars + sprites:
         group.append(item)
 
     # Setup buttons
