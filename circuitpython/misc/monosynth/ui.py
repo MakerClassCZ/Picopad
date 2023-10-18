@@ -51,9 +51,9 @@ def get_display():
     # Settings labels
     labels = []
     x = 10
-    inc = increase(0, 30)
+    inc = increase(-15, 30)
 
-    for item in ["shape", "octave", "lfo", "freqency", "q-factor", "release", "detune"]:
+    for item in ["drums", "octave", "shape", "lfo", "freqency", "q-factor", "release", "detune"]:
         labels.append(label.Label(terminalio.FONT, text=item, color=colors.white, x=x, y=next(inc)))
 
     # make first label active (red)
@@ -62,7 +62,7 @@ def get_display():
     # Settings bars
     bars = []
     x = 80
-    inc = increase(60, 30)
+    inc = increase(72, 30)
     w = 150
     h = 8
 
@@ -81,12 +81,18 @@ def get_display():
     active_palette = displayio.Palette(2)
     active_palette[0] = colors.yellow
     active_palette[1] = colors.black
+    
+    inverse_palette = displayio.Palette(2)
+    inverse_palette[0] = colors.white
+    inverse_palette[1] = colors.black
 
     # normal palette is defaul black & white
     # active palette is yellow & black - for selected icon
+    # inverse palette is white & black
     class palettes:
         normal = palette
         active = active_palette
+        inverse = inverse_palette
 
     # every icon is 15x13
     w = 15
@@ -97,7 +103,7 @@ def get_display():
     for item in range(6):
         sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette, tile_width=w, tile_height=h)
         sprite.x = x
-        sprite.y = 24
+        sprite.y = 68
         sprite[0] = item
         x += w+10
         sprites.append(sprite)
@@ -107,8 +113,18 @@ def get_display():
     for item in range(5):
         sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette, tile_width=w, tile_height=h)
         sprite.x = x
-        sprite.y = 54
+        sprite.y = 38
         sprite[0] = item + 6
+        x += w+10
+        sprites.append(sprite)
+        
+    # drums active line
+    x = 80
+    for item in range(3):
+        sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette, tile_width=w, tile_height=h)
+        sprite.x = x
+        sprite.y = 10
+        sprite[0] = item + 11
         x += w+10
         sprites.append(sprite)
 

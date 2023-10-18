@@ -11,7 +11,10 @@ import audiopwmio
 import synthio
 from waves import Wavetable, wave_squ, wave_sin, wave_tri, wave_saw, wave_noise
 from ui import get_display
+# Drums from https://gist.github.com/gamblor21/15a430929abf0e10eeaba8a45b01f5a8
+from drums import KickDrum, Snare, HighHat
 
+DEBUG = False
 
 # basic synth settings
 oscs_per_note = 3      # how many oscillators for each note
@@ -90,6 +93,23 @@ def note_off():
     synth.release(oscs)
     oscs.clear()
 
+def drum(type, sprite_num):
+    if type == "kick":
+        kick.play()
+    elif type == "snare":
+        snare.play()
+    elif type == "highhat":
+        highhat.play()
+
+    sprites[sprite_num].pixel_shader = palettes.inverse
+    
+    if type == "off":
+        sprites[sprite_num].pixel_shader = palettes.normal
+            
+    display.refresh()
+        
+    
+    display.refresh()
 
 class synh_settings():
     def __init__(self):
@@ -107,41 +127,43 @@ class synh_settings():
 
     def move(self, ch):
         labels[self.current].color = colors.white
-        self.current = limits(self.current, 1*ch, 0, 6, True)
+        self.current = limits(self.current, 1*ch, 0, 7)
         labels[self.current].color = colors.red
         display.refresh()
 
     def change(self, ch):
-        if self.current == 0:
-            sprites[self.shape].pixel_shader = palettes.normal
-            self.shape = limits(self.shape, 1*ch, 0, 5, True)
-            sprites[self.shape].pixel_shader = palettes.active
 
-        elif self.current == 1:
+
+        if self.current == 1:
             sprites[8+self.octave//12].pixel_shader = palettes.normal
             self.octave = limits(self.octave, 12*ch, -24, 24)
             sprites[8+self.octave//12
                     ].pixel_shader = palettes.active
-
+        
         elif self.current == 2:
-            self.lfo = limits(self.lfo, 10*ch, 0, 100)
-            bars[self.current-2].value = self.lfo
+            sprites[self.shape].pixel_shader = palettes.normal
+            self.shape = limits(self.shape, 1*ch, 0, 5, True)
+            sprites[self.shape].pixel_shader = palettes.active
 
         elif self.current == 3:
-            self.freq = limits(self.freq, 10*ch, 0, 100)
-            bars[self.current-2].value = self.freq
+            self.lfo = limits(self.lfo, 10*ch, 0, 100)
+            bars[self.current-3].value = self.lfo
 
         elif self.current == 4:
-            self.q = limits(self.q, 10*ch, 0, 100)
-            bars[self.current-2].value = self.q
+            self.freq = limits(self.freq, 10*ch, 0, 100)
+            bars[self.current-3].value = self.freq
 
         elif self.current == 5:
-            self.release = limits(self.release, 10*ch, 0, 100)
-            bars[self.current-2].value = self.release
+            self.q = limits(self.q, 10*ch, 0, 100)
+            bars[self.current-3].value = self.q
 
         elif self.current == 6:
+            self.release = limits(self.release, 10*ch, 0, 100)
+            bars[self.current-3].value = self.release
+
+        elif self.current == 7:
             self.detune = limits(self.detune, 10*ch, 0, 100)
-            bars[self.current-2].value = self.detune
+            bars[self.current-3].value = self.detune
 
         display.refresh()
 
@@ -160,8 +182,13 @@ bars[2].value = s.q
 bars[3].value = s.release
 bars[4].value = s.detune
 
-velocity = 100
-last = 0
+kick = KickDrum(synth)
+snare = Snare(synth)
+highhat = HighHat(synth)
+
+if DEBUG:
+    last = 0
+
 
 display.refresh()
 
@@ -191,13 +218,34 @@ while True:
             display.refresh()
 
     if (buttons[4].fell):
-        s.change(-1)
-
+        if s.current == 0:
+            drum("kick", 11)
+        else:
+            s.change(-1)
+    
+    if (buttons[4].rose):
+        if s.current == 0:
+            drum("off", 11)
+            
     if (buttons[5].fell):
-        s.change(1)
+        if s.current == 0:
+            drum("snare", 13)
+        else:
+            s.change(1)
+    
+    if (buttons[5].rose):
+        if s.current == 0:
+            drum("off", 13)
 
     if (buttons[6].fell):
-        s.move(-1)
+        if s.current == 0:
+            drum("highhat", 12)
+        else:
+            s.move(-1)
+
+    if (buttons[6].rose):
+        if s.current == 0:
+            drum("off", 12)
 
     if (buttons[7].fell):
         s.move(1)
@@ -208,10 +256,10 @@ while True:
     amp_env_release_time = map_range(s.release, 0, 100, 0.1, 1)
     osc_detune = map_range(s.detune, 0, 100, 0, 0.01)
 
-    # debug
-    if lfo_vibrato.scale + filter_freq + filter_res + amp_env_release_time + osc_detune != last:
-        print(s.shape, s.octave, s.lfo, s.freq, s.q, s.release, s.detune)
-        print(lfo_vibrato.scale, filter_freq, filter_res,
-              amp_env_release_time, osc_detune)
-    last = lfo_vibrato.scale + filter_freq + \
-        filter_res + amp_env_release_time + osc_detune
+    if DEBUG:
+        if lfo_vibrato.scale + filter_freq + filter_res + amp_env_release_time + osc_detune != last:
+            print(s.shape, s.octave, s.lfo, s.freq, s.q, s.release, s.detune)
+            print(lfo_vibrato.scale, filter_freq, filter_res,
+                amp_env_release_time, osc_detune)
+        last = lfo_vibrato.scale + filter_freq + \
+            filter_res + amp_env_release_time + osc_detune
