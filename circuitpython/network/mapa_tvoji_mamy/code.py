@@ -8,6 +8,7 @@ from rainbowio import colorwheel
 import adafruit_requests
 
 from adafruit_debouncer import Debouncer
+from adafruit_ticks import ticks_ms, ticks_add, ticks_less
 from digitalio import DigitalInOut, Pull
 
 
@@ -623,11 +624,14 @@ wifi.radio.connect(os.getenv('CIRCUITPY_WIFI_SSID'), os.getenv('CIRCUITPY_WIFI_P
 pool = socketpool.SocketPool(wifi.radio)
 requests = adafruit_requests.Session(pool, ssl.create_default_context())
 
-with requests.get("http://cdn.tmep.cz/app/export/okresy-cr-vse.json") as response:
-    data = response.json()
+
+def update_data():
+    with requests.get("http://cdn.tmep.cz/app/export/okresy-cr-vse.json") as response:
+        data = response.json()
+    return data
 
 
-def show_data(h):
+def show_data(h, data):
     min = 10000
     max = -10000
 
@@ -665,11 +669,20 @@ def show_data(h):
     display.refresh()    
 
 
+deadline = ticks_ms()
+
 values = ['h1', 'h2', 'h3', 'h4']
 i = 0
-show_data(values[i])
 
 while True:
+
+
+    if ticks_less(deadline, ticks_ms()):
+        data = update_data()
+        show_data(values[i], data)
+        deadline = ticks_add(deadline, 300_000)
+        print("Data updated")
+
     btn_left.update()
     btn_right.update()
 
@@ -677,12 +690,12 @@ while True:
         i+=1
         if i>3:
             i=0
-        show_data(values[i])
+        show_data(values[i], data)
     if btn_right.fell:
         i-=1
         if i<0:
             i=3
-        show_data(values[i])
+        show_data(values[i], data)
 
 
     
