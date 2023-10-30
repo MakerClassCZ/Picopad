@@ -4,7 +4,7 @@ In this example, you'll connect Picopad to real world. SD card required!!!
 We will use the adafruit_requests library to download teletext page from the https://teletext.ceskatelevize.cz/ and display it on the screen.
 
 The teletext page is png image 320x276 pixels. To display it on the screen, we need to convert it to 4bpp bmp image.
-Becouse of limited memory, we will offload the conversion to the teletext.lynt.cz proxy server that convert the image and send it back to us.
+Becouse of limited memory, we will offload the conversion to the api.makerclass.cz proxy server that convert the image and send it back to us.
 For futher memory saving, we will save the image to SD card and display it from there.
 
 We will use buttons to scroll the page up and down and to change the teletext page number.
@@ -72,7 +72,7 @@ def teletext(page):
     global bitmap
     global palette
 
-    with requests.get(f"http://teletext.lynt.cz/?page={page}", stream=True) as resp:
+    with requests.get(f"http://api.makerclass.cz/teletext/getBmp?page={page}", stream=True) as resp:
         # Get headers with previous and next page number
         try:
             prev = int(resp.headers['prev'])
