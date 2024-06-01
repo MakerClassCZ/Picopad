@@ -61,7 +61,7 @@ class Game:
         self.screen.append(self.text)
 
         # Show sprite group on the display
-        display.show(self.screen)
+        display.root_group = self.screen
         
         self.reset()
 

@@ -611,7 +611,7 @@ def get_display():
     text_label = label.Label(terminalio.FONT, text='hodnota', x=5, y=5, color=0xFFFFFF, scale=1)
 
     group.append(text_label) 
-    display.show(group)
+    display.root_group = group
 
     return display, dots, okresy, text_label
 

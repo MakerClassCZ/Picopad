@@ -69,7 +69,7 @@ for reading, data in sensor.readings.items():
     top += increment
 
 
-display.show(group)
+display.root_group = group
 
 
 # read and show measured values every 5 seconds

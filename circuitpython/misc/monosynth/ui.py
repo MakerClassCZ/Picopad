@@ -145,7 +145,7 @@ def get_display():
         buttons.append(Debouncer(pin))
 
 
-    display.show(group)
+    display.root_group = group
 
     return display, keys, labels, bars, sprites, buttons, colors, palettes
 

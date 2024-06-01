@@ -40,6 +40,9 @@ wave_sin = np.array(np.sin(np.linspace(
     0, 2*np.pi, SAMPLE_SIZE, endpoint=False)) * VOLUME, dtype=np.int16)
 wave_noise = np.array([random.randint(-VOLUME, VOLUME)
                       for i in range(SAMPLE_SIZE)], dtype=np.int16)
-wave_sin_dirty = np.array(wave_sin + (wave_noise/4), dtype=np.int16)
+
+wave_combined = wave_sin + (wave_noise / 4)
+wave_combined_clipped = np.clip(wave_combined, -32768, 32767)
+wave_sin_dirty = np.array(wave_combined_clipped, dtype=np.int16)
 
 wavetable = Wavetable("PLAITS02.WAV")

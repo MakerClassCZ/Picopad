@@ -120,7 +120,7 @@ URL = f"http://cdn.zivyobraz.eu/index.php?mac={mac_addr}&x={display.width}&y={di
 
 group = displayio.Group()
 group.append(displayio.Group())
-display.show(group)
+display.root_group = group
 
 while True:
     sleep_time = process_zivyobraz(URL)

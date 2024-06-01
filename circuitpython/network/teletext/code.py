@@ -60,7 +60,7 @@ display = board.DISPLAY
 display.auto_refresh = False
 group = displayio.Group()
 group.append(displayio.Group())
-display.show(group)
+display.root_group = group
 
 bitmap = None
 palette = None
@@ -169,12 +169,12 @@ while True:
     # Teletext page has resolution 320x276 - we need to scroll down to see the whole page
     if (btn_down.value == False):
         group.y = -40
-        display.show(group)
+        display.root_group = group
         display.refresh()
 
     if (btn_up.value == False):
         group.y = 0
-        display.show(group)
+        display.root_group = group
         display.refresh()
 
     # Change teletext page

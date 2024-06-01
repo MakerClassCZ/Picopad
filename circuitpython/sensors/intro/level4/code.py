@@ -73,7 +73,7 @@ for reading, data in sensor.readings.items():
     group.append(sprite)
     top += increment
 
-display.show(group)
+display.root_group = group
 
 
 # Asynchronous function to blink the LED

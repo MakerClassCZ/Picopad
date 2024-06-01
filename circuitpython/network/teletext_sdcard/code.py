@@ -100,7 +100,7 @@ def display_page():
     tile_grid = displayio.TileGrid(image, pixel_shader=image.pixel_shader)
     
     group.append(tile_grid)
-    display.show(group)
+    display.root_group = group
 
 # Initialize WiFi
 wifi.radio.connect(os.getenv('CIRCUITPY_WIFI_SSID'), os.getenv('CIRCUITPY_WIFI_PASSWORD'))
@@ -119,11 +119,11 @@ while True:
     # Teletext page has resolution 320x276 - we need to scroll down to see the whole page
     if (btn_down.value == False):
         group.y = -40
-        board.DISPLAY.show(group)
+        board.DISPLAY.root_group = group
 
     if (btn_up.value == False):
         group.y = 0
-        board.DISPLAY.show(group)
+        board.DISPLAY.root_group = group
 
     # Change teletext page
     if (btn_right.value == False):

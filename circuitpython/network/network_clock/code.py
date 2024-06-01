@@ -110,7 +110,7 @@ text_area.y = 170
 group.append(text_area)
 
 # Show the display group
-display.show(group)
+display.root_group = group
 
 async def move_sun():
     while True:
