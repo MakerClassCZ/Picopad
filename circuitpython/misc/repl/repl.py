@@ -2,6 +2,7 @@ import board
 import time
 import os
 import gc
+import sys
 
 display = board.DISPLAY
 requests = None
@@ -74,6 +75,7 @@ def i2c_scanner():
     print("Scanning I2C bus for devices...")
     import busio
     try:
+        import i2c_devices
         i2c = busio.I2C(board.SCL, board.SDA)
         while not i2c.try_lock():
             pass
@@ -82,11 +84,30 @@ def i2c_scanner():
             if devices:
                 print("I2C devices found:")
                 for device in devices:
-                    print(f" - I2C address: {hex(device)}")
+                    device_name = i2c_devices.i2c_devices.get(device, "Unknown device")
+                    print(f"\n - I2C address: {hex(device)}")
+                    print(f" - possible devices: {device_name}")
             else:
                 print("No I2C devices found")
         finally:
             i2c.unlock()
+        i2c.deinit()
+        del sys.modules['i2c_devices']
+    except ImportError:
+        i2c = busio.I2C(board.SCL, board.SDA)
+        while not i2c.try_lock():
+            pass
+        try:
+            devices = i2c.scan()
+            if devices:
+                print("I2C devices found:")
+                for device in devices:
+                    print(f"\n - I2C address: {hex(device)}")
+            else:
+                print("No I2C devices found")
+        finally:
+            i2c.unlock()
+        i2c.deinit()
     except RuntimeError as e:
         print(f"Error: {e}")
 
