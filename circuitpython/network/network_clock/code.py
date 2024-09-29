@@ -61,7 +61,7 @@ display = board.DISPLAY
 # Create a display group
 group = displayio.Group()
 
-bitmap_bg, palette_sky = adafruit_imageload.load("/sky.bmp",
+bitmap_bg, palette_sky = adafruit_imageload.load("/bg.bmp",
                                           bitmap=displayio.Bitmap,
                                           palette=displayio.Palette)
 
