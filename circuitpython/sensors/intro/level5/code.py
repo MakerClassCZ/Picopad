@@ -39,9 +39,9 @@ import sdcardio
 import storage
 
 
-#from sensor_scd4x import Sensor
+from sensor_scd4x import Sensor
 # if you don't have SCD4x, you can try use internal temperature sensor of rp2040 as a demo
-from sensor_internal import Sensor
+# from sensor_internal import Sensor
 
 # global variable to store the measured values
 measurements = None
