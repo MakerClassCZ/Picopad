@@ -17,6 +17,7 @@ You can find the required libraries in the CircuitPython library bundle (https:/
 import os
 import wifi
 import ssl
+import sys
 import socketpool
 import time
 import zlib
@@ -29,9 +30,8 @@ def removeCzechDiacritics(text):
     """
     Convert Czech characters to plain ASII.
     """
-    diacritics    = "ÁÉĚÍÓÚŮÝČĎŇŘŠŤŽáéěíóúůýčďňřšťž"
-    no_diacritics = "AEEIOUUYCDNRSTZaeeiouuycdnrstz"
-    
+    diacritics    = "ÁÉĚÍÓÖÚŮÝČĎŇŘŠŤŽáéěíóöúůüýčďňřšťž✈"
+    no_diacritics = "AEEIOOUUYCDNRSTZaeeioouuuycdnrstz "
     result = ""
     
     for char in text:
@@ -61,27 +61,19 @@ def PrintInfotexts(infotexts):
         print(inf["text"])
 
 
-def ConnectWifi():
-    wifi.radio.connect(os.getenv("CIRCUITPY_WIFI_SSID"), os.getenv("CIRCUITPY_WIFI_PASSWORD"))
-    print("Connected to WiFi", os.getenv("CIRCUITPY_WIFI_SSID"))
+def ConnectWifi(wifi_ssid, wifi_password):
+    wifi.radio.connect(wifi_ssid, wifi_password)
+    print("Connected to WiFi", wifi_ssid)
 
     pool = socketpool.SocketPool(wifi.radio)
     request = adafruit_requests.Session(pool, ssl.create_default_context())
     return request
 
 
-def AskGolem(request):
+def AskGolem(request, api_key, query):
 
-    if os.getenv("GOLEMIO_API_KEY") is None or len(os.getenv("GOLEMIO_API_KEY")) < 80:
-        print("You need to set GOLEMIO_API_KEY in settings.toml.")
-        return
-
-    if os.getenv("STOP_NAME") is not None and len(os.getenv("STOP_NAME")) > 0:
-        query = f"names={os.getenv("STOP_NAME")}"
-    elif os.getenv("STOP_GTFS_ID") is not None and len(os.getenv("STOP_GTFS_ID")) > 0:
-        query = f"ids={os.getenv("STOP_GTFS_ID")}"
-    else:
-        print("You need to set either STOP_GTFS_ID or STOP_NAME in settings.toml.")
+    if (request is None or api_key is None or query is None):
+        print("Not enough parameters to bring Golem to live. Try harder.")
         return
 
     # You might wanna to tweak query parameters in request url, you can do a lot of magic here
@@ -89,14 +81,12 @@ def AskGolem(request):
     url = f"https://api.golemio.cz/v2/pid/departureboards?{query}&preferredTimezone=Europe%2FPrague&total=10"
 
     headers = {
-        "X-Access-Token": os.getenv("GOLEMIO_API_KEY"), # Use secret of Shem HaMephorash
+        "X-Access-Token": api_key, # Use secret of Shem HaMephorash
         "Accept": "application/json"
     }
     # Uncomment if there is a problem with gzip compression of the response
     # headers["Accept-Encoding"] = "identity";
 
-
-    print("Golemio... 8-)")
     response = request.get(url, headers=headers)
     status_code = response.status_code
 
@@ -128,5 +118,23 @@ def AskGolem(request):
         print("Wrong response :("); # You should be transformed into a chandelier, to hang by day and to burn by night. (Yiddish Curse)
 
 
-request = ConnectWifi()
-AskGolem(request)
+
+api_key = None
+query = None
+
+if os.getenv("GOLEMIO_API_KEY") is None or len(os.getenv("GOLEMIO_API_KEY")) < 80:
+    print("You need to set GOLEMIO_API_KEY in settings.toml.")
+    sys.exit(1)
+else:
+    api_key = os.getenv("GOLEMIO_API_KEY")
+
+if os.getenv("STOP_NAME") is not None and len(os.getenv("STOP_NAME")) > 0:
+    query = f"names={os.getenv("STOP_NAME")}"
+elif os.getenv("STOP_GTFS_ID") is not None and len(os.getenv("STOP_GTFS_ID")) > 0:
+    query = f"ids={os.getenv("STOP_GTFS_ID")}"
+else:
+    print("You need to set either STOP_GTFS_ID or STOP_NAME in settings.toml.")
+    sys.exit(1)
+
+request = ConnectWifi(os.getenv("CIRCUITPY_WIFI_SSID"), os.getenv("CIRCUITPY_WIFI_PASSWORD"))
+AskGolem(request, api_key, query)
