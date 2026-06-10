@@ -31,3 +31,9 @@ Guide the snake to eat apples and grow longer.
 -   Increasing difficulty
 
 ![cp_games_pixelsnake](https://github.com/MakerClassCZ/Picopad/assets/3875093/62591242-55f0-4fb7-a8e4-a801be5b51ed)
+
+For more PicoPad CircuitPython games check:
+
+[PicoFrog](https://github.com/MakerClassCZ/Picopad-PicoFrog)
+
+[Fruitris](https://github.com/MakerClassCZ/Picopad-Fruitris)
