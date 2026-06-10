@@ -16,6 +16,9 @@ Polyphonic synthesizer with drum machine. Play notes with buttons, switch betwee
 -   Drum synthesis (kick, snare, hi-hat)
 -   Interactive parameter UI with sprite graphics
 
+<img width="320" height="240" alt="monosynth" src="https://github.com/user-attachments/assets/bf8a2961-6910-4cf2-b8e1-fb8da3f49336" />
+
+
 ## Macro Keyboard
 
 Turn PicoPad into a USB HID macro keyboard. Each button sends different key sequences - from simple arrow keys to complex macros that open applications and type text.
@@ -71,3 +74,6 @@ Standalone alarm clock that works without WiFi. Set time manually using buttons.
 -   Button-based time setting UI
 -   Alarm scheduling and notification
 -   State machine (setting, normal, alarm, ringing)
+
+<img width="320" height="240" alt="alarm_clock" src="https://github.com/user-attachments/assets/fd4962b6-4ca2-4fe4-9561-2e7b8789811c" />
+
