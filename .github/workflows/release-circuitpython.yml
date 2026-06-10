@@ -1,0 +1,26 @@
+name: Release CircuitPython
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build package
+        run: zip -r "$RUNNER_TEMP/circuitpython.zip" circuitpython
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest \
+            "$RUNNER_TEMP/circuitpython.zip" \
+            --title "CircuitPython (latest)" \
+            --notes "Pack of CircuitPython examples for PicoPad."
