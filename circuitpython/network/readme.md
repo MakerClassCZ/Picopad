@@ -37,6 +37,9 @@ WiFi network scanner that visualizes nearby networks as parabolas on a channel g
 -   Signal strength visualization
 -   Channel mapping
 
+<img width="320" height="240" alt="wifi_scanner" src="https://github.com/user-attachments/assets/2b2316b3-47d4-4e97-90c8-8d058af90818" />
+
+
 ## Teletext
 
 Three examples showing different approaches to fetching Czech Television teletext via [api.makerclass.cz](http://api.makerclass.cz):
@@ -62,6 +65,35 @@ Three examples showing different approaches to fetching Czech Television teletex
 - custom BDF font extracted from teletext test page with full Czech/Slovak diacritics
 - rounding number to tens/hundreds with simple arithmetic
 
+
+ ## Prague Public Transport Departures (Golemio)
+
+  Live departure board for Prague public transport, using the city's open data platform
+  [Golemio.cz](https://api.golemio.cz). Two variants are included:
+
+  - **code.py** - prints the next departures to the serial console.
+  - **code_display.py** - renders a full departure board on the display: stop name, line numbers color-coded by metro
+  line (A green, B yellow, C red), destinations, air-conditioning marker, and minutes-to-departure.
+
+ ### Key concepts:
+
+  -   Using an open government / city data API
+  -   HTTPS with a custom CA certificate
+  -   API key authentication via request headers
+  -   Parsing JSON responses
+  -   Pre-allocated display layout for memory-efficient refreshes
+     
+<img width="320" height="240" alt="golemiot" src="https://github.com/user-attachments/assets/ff904d8f-1e67-425c-acb5-d009a56a4031" />
+  
+### Interesting techniques:
+
+  - HTTPS to a specific host by loading the its certificate (`gtsr4.pem`) into the SSL context instead of bundling the full trust store
+  - handling gzip-compressed API responses with `zlib.decompress`
+  - deriving the current local time from the HTTP `Date` response header plus the API's ISO timezone offset - no NTP or RTC
+
+
+
+
 ## Network Clock
 
 NTP-synced clock with animated day/night sky. The sun moves across the sky following real time, and stars appear at night via palette swap.
@@ -71,6 +103,9 @@ NTP-synced clock with animated day/night sky. The sun moves across the sky follo
 -   NTP time synchronization
 -   Display animation and sprite layering
 -   EU daylight saving time calculation
+
+<img width="320" height="240" alt="network_clock" src="https://github.com/user-attachments/assets/e45158fa-2ad3-43c9-a970-bdd8762f0953" />
+
 
 ## Alarm Clock
 
@@ -82,6 +117,9 @@ NTP-synced alarm clock with time display and alarm functionality. Set the time a
 -   Alarm scheduling
 -   Audio output
 -   Button-based UI for time and alarm setting
+
+<img width="320" height="240" alt="alarm_clock" src="https://github.com/user-attachments/assets/e8228771-b875-4070-a1f3-9b7319e982d8" />
+
 
 ## Telegram Bot
 
@@ -113,6 +151,9 @@ Three examples demonstrating different real-time communication patterns for a we
 -   Serving HTML files and JSON API
 -   Alpine.js reactive frontend
 
+<img width="515" height="375" alt="picopad_webserver" src="https://github.com/user-attachments/assets/3c1b12b7-ec06-4f6e-843b-1f44902a2a79" />
+
+
 ## Mapa tvoji mamy
 
 Czech regions map with real-time environmental data fetched from tmep.cz. Select a region and see live sensor readings displayed on the map.
@@ -122,6 +163,9 @@ Czech regions map with real-time environmental data fetched from tmep.cz. Select
 -   HTTP API integration
 -   Data visualization and color mapping
 -   Interactive UI
+
+<img width="320" height="240" alt="image" src="https://github.com/user-attachments/assets/3ba3eb1b-0517-4efe-b9a3-ae39b20e3a5c" />
+
 
 ## Zivy obraz
 

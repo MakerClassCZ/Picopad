@@ -20,7 +20,8 @@ The guide is organized into lessons that progress in complexity. Each lesson inc
 
 Dive in, practice, and before you know it, you'll be designing your own innovative projects using CircuitPython!
 
-![cp_examples](https://github.com/MakerClassCZ/Picopad/assets/3875093/f0160824-a54e-4ffd-984b-d4e50aa664f1)
+<img width="980" height="444" alt="image" src="https://github.com/user-attachments/assets/f0485b10-3d71-49b6-8785-04e8ac27f404" />
+
 
 ## Quick Start
 
